@@ -5,8 +5,7 @@
 #   IOTDB.org
 #   2014-01-31
 #
-#   Demonstrate how to use the SmartThings API
-#   from Python.
+#   Demonstrate how to use the SmartThings API from Python.
 #
 #   See also:
 #   Example App explanation:
@@ -18,21 +17,27 @@
 #   Example "Groovy"/SMART code  (this is the app we tap into)
 #   https://www.dropbox.com/s/lohzziy2wjlrppb/endpointExample.groovy
 #
-#   
-#
 
+import sys
 import requests
 import pprint
 import json
 
-import iotdb_log
+from optparse import OptionParser
+
+try:
+    import iotdb_log
+except:
+    class iotdb_log(object):
+        def log(self, **ad):
+            pprint.pprint(ad)
 
 class SmartThings(object):
     def __init__(self, verbose=True):
         self.verbose = verbose
         self.std = {}
-        self.endpointds = {}
-        self.switchds = {}
+        self.endpointd = {}
+        self.deviceds = {}
 
     def load_settings(self, filename="smartthings.json"):
         """Load the JSON Settings file. 
@@ -57,93 +62,118 @@ class SmartThings(object):
         }
 
         endpoints_response = requests.get(url=endpoints_url, params=endpoints_paramd)
-        self.endpointds = endpoints_response.json()
+        self.endpointd = endpoints_response.json()[0]
 
         if self.verbose: iotdb_log.log(
             "endpoints",
             endpoints_url=endpoints_url,
             endpoints_paramd=endpoints_paramd,
-            resultds=self.endpointds,
+            resultds=self.endpointd,
         )
 
-    def request_switches(self):
-        """List the switches"""
+    def request_devices(self, device_type):
+        """List the devices"""
 
-        for resultd in self.endpointds:
-            switches_url = "http://graph.api.smartthings.com%s/switch" % ( resultd["url"], )
-            switches_paramd = {
-            }
-            switches_headerd = {
-                "Authorization": "Bearer %s" % self.std["access_token"],
-            }
+        devices_url = "http://graph.api.smartthings.com%s/%s" % ( self.endpointd["url"], device_type, )
+        devices_paramd = {
+        }
+        devices_headerd = {
+            "Authorization": "Bearer %s" % self.std["access_token"],
+        }
 
-            switches_response = requests.get(url=switches_url, params=switches_paramd, headers=switches_headerd)
-            self.switchds = switches_response.json()
-            iotdb_log.log(switchds = self.switchds)
-            for switchd in self.switchds:
-                switchd['url'] = "%s/%s" % ( switches_url, switchd['id'], )
+        devices_response = requests.get(url=devices_url, params=devices_paramd, headers=devices_headerd)
+        self.deviceds = devices_response.json()
+        for switchd in self.deviceds:
+            switchd['url'] = "%s/%s" % ( devices_url, switchd['id'], )
 
-            if self.verbose: iotdb_log.log(
-                "switches",
-                url=switches_url,
-                paramd=switches_paramd,
-                switchds=self.switchds,
-            )
-
-    def switch(self, label, command):
-        """Send a command the named switch
-
-        Commands are 'on', 'off', 'toggle'. The command
-        is basically just appended to the switch URL
-        """
-
-        switchd = self.switch_by_label(label)
-        if not switchd:
-            print >> sys.stderr, "switch '%s' not found" % ( label, )
-
-        if 1:
-            command_url = switchd['url']
-            command_paramd = {
-                "access_token": self.std["access_token"]
-            }
-            command_headerd = {}
-            command_payload = {
-                "switch" : "hi there"
-            }
-
-            command_response = requests.put(
-                url=command_url, 
-                params=command_paramd, 
-                headers=command_headerd,
-                data=json.dumps(command_payload)
-            )
-        else:
-            command_url = switchd['url'] + "/" + command
-            command_paramd = {
-                "access_token": self.std["access_token"]
-            }
-            command_headerd = {}
-
-            command_response = requests.get(url=command_url, params=command_paramd, headers=command_headerd)
         if self.verbose: iotdb_log.log(
-            "switch-command",
-            command=command,
-            url=command_url,
-            paramd=command_paramd,
-            response=command_response,
+            "devices",
+            url=devices_url,
+            paramd=devices_paramd,
+            deviceds=self.deviceds,
         )
 
-    def switch_by_label(self, label):
-        """Find a switch with the label (or ID)"""
+        return self.deviceds
 
-        for switchd in self.switchds:
-            if label == ( switchd.get('label') or switchd.get('id') ):
-                return switchd
-            
+    def device_request(self, deviced, requestd):
+        """Send a request the named device"""
+
+        command_url = deviced['url']
+        command_paramd = {
+            "access_token": self.std["access_token"]
+        }
+        command_headerd = {}
+
+        command_response = requests.put(
+            url=command_url, 
+            params=command_paramd, 
+            headers=command_headerd,
+            data=json.dumps(requestd)
+        )
 
 if __name__ == '__main__':
-    st = SmartThings()
+    parser = OptionParser()
+    parser.add_option(
+        "", "--debug",
+        default = False,
+        action = "store_true",
+        dest = "debug",
+        help = "",
+    )
+    parser.add_option(
+        "", "--verbose",
+        default = False,
+        action = "store_true",
+        dest = "verbose",
+        help = "",
+    )
+    parser.add_option(
+        "", "--type",
+        dest = "device_type",
+        help = "The device type (required), one of switch, motion, presence, acceleration, contact"
+    )
+    parser.add_option(
+        "", "--id",
+        dest = "device_id",
+        help = "The ID or Name of the device to manipulate"
+    )
+    parser.add_option(
+        "", "--request",
+        dest = "request",
+        help = "Something to do, e.g. 'switch=1', 'switch=0'"
+    )
+
+    (options, args) = parser.parse_args()
+
+    if not options.device_type:
+        print >> sys.stderr, "%s: --type <switch|motion|presence|accleration|contact>" % ( sys.argv[0], )
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+        
+
+    st = SmartThings(verbose=options.verbose)
     st.load_settings()
     st.request_endpoints()
-    st.request_switches()
-    st.switch('My Z-Wave Switch', 'toggle')
+
+    ds = st.request_devices(options.device_type)
+
+    if options.device_id:
+        ds = filter(lambda d: options.device_id in [ d.get("id"), d.get("label"), ], ds)
+
+    if options.request:
+        key, value = options.request.split('=', 2)
+        try:
+            value = int(value)
+        except ValueError:
+            pass
+
+        requestd = {
+            key: value
+        }
+
+        for d in ds:
+            iotdb_log.log(device=d, request=requestd)
+            st.device_request(d, requestd)
+
+    else:
+        print json.dumps(ds, indent=2, sort_keys=True)

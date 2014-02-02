@@ -45,12 +45,8 @@ mappings {
     }
     path("/:type/:id") {
         action: [
-            GET: "_api_show"
-        ]
-    }
-    path("/:type/:id/:command") {
-        action: [
-            GET: "_api_update"
+            GET: "_api_get",
+            PUT: "_api_put"
         ]
     }
 }
@@ -95,14 +91,16 @@ def _event_subscribe()
  */
 def _on_event(evt)
 {
-	def dt = _device_and_type_for_id(evt.deviceId)
+    def dt = _device_and_type_for_id(evt.deviceId)
     if (!dt) {
-	    log.debug "_on_event deviceId=${evt.deviceId} not found?"
+        log.debug "_on_event deviceId=${evt.deviceId} not found?"
         return;
     }
     
     def jd = _device_to_json(dt.device, dt.type)
     log.debug "_on_event deviceId=${jd}"
+
+    _send_mqtt(dt.device, dt.type, jd)
 
 }
 
@@ -116,18 +114,23 @@ def _api_list()
 
 def _api_put()
 {
-    log.debug "${params}"
-    [:]
-}
-
-def _api_show()
-{
-	def devices = _devices_for_type(params.type)
+    def devices = _devices_for_type(params.type)
     def device = devices.find { it.id == params.id }
     if (!device) {
         httpError(404, "Device not found")
     } else {
-    	_device_to_json(device, type)
+        _device_command(device, params.type, request.JSON)
+    }
+}
+
+def _api_get()
+{
+    def devices = _devices_for_type(params.type)
+    def device = devices.find { it.id == params.id }
+    if (!device) {
+        httpError(404, "Device not found")
+    } else {
+        _device_to_json(device, type)
     }
 }
 
@@ -156,15 +159,59 @@ def _send_pushingbox() {
     httpGet("http://api.pushingbox.com/pushingbox?devid=${devid}&message=xxx_xxx")
 }
 
+/*
+ *  Send information the the IOTDB MQTT Bridge
+ *  See https://iotdb.org/playground/mqtt/bridge for documentation
+ */
+def _send_mqtt(device, device_type, deviced) {
+    log.debug "_send_mqtt called";
+
+    def username = "nobody"
+    def nonce = "4B453B43-F1FC-4327-85FA-4DF93E0F5B01"
+    
+    def now = Calendar.instance
+    def date = now.time
+    def millis = date.time
+    def sequence = millis
+    def isodatetime = deviced?.value?.timestamp
+    
+    def digest = "${nonce}/${username}/${isodatetime}/${sequence}".toString();
+    def hash = digest.encodeAsMD5();
+    
+    def topic = "${device_type}/${deviced.id}".toString()
+    
+    def uri = "https://iotdb.org/playground/mqtt/bridge"
+    def headers = [:]
+    def body = [
+        "topic": topic,
+        "payloadd": deviced?.value,
+        "timestamp": isodatetime,
+        "sequence": sequence,
+        "signed": hash,
+        "username": username
+    ]
+
+    def params = [
+        uri: uri,
+        headers: headers,
+        body: body
+    ]
+
+    log.debug "_send_mqtt: params=${params}"
+    httpPutJson(params) { log.debug "_send_mqtt: response=${response}" }
+}
+
+
+
 /* --- internals --- */
 /*
  *  Devices and Types Dictionary
  */
 def _dtd()
 {
-	[ 
-    	switch: d_switch, 
-    	motion: d_motion, 
+    [ 
+        switch: d_switch, 
+        motion: d_motion, 
         contact: d_contact,
         acceleration: d_acceleration,
         presence: d_presence
@@ -178,44 +225,43 @@ def _devices_for_type(type)
 
 def _device_and_type_for_id(id)
 {
-	def dtd = _dtd()
-    log.debug "dtd=${dtd}"
+    def dtd = _dtd()
     
     for (dt in _dtd()) {
-    	def type = dt.key
+        def type = dt.key
         def devices = dt.value
-    	for (device in devices) {
-        	log.debug "want ${id} got ${device.id}"
-        	if (device.id == id) {
-            	return [ device: device, type: type ]
+        for (device in devices) {
+            if (device.id == id) {
+                return [ device: device, type: type ]
             }
         }
     }
 }
 
-/*
- *  Perform the operation on the 
+/**
+ *  Do a device command
  */
-private void _do_update(devices, type)
-{
-    log.debug "_do_update, request: params: ${params}, devices: $devices.id"
-
-    def command = params.command
-    if (command) {
-        def device = devices.find { it.id == params.id }
-        if (!device) {
-            httpError(404, "Device not found")
-        } else {
-            if (command == "toggle") {
-                if (device.currentValue('switch') == "on") {
-                    device.off();
-                } else {
-                    device.on();
-                }
-            } else {
-                device."$command"()
-            }
+private _device_command(device, type, jsond) {
+    if (!device) {
+        return;
+    }
+    if (!jsond) {
+        return;
+    }
+    
+    if (type == "switch") {
+        def n = jsond['switch']
+        if (n == -1) {
+            def o = device.currentState('switch')?.value
+            n = ( o != 'on' )
         }
+        if (n) {
+            device.on()
+        } else {
+            device.off()
+        }
+    } else {
+        log.debug "_device_command: device type=${type} doesn't take commands"
     }
 }
 
@@ -223,33 +269,33 @@ private void _do_update(devices, type)
  *  Convert a single device into a JSONable object
  */
 private _device_to_json(device, type) {
-	if (!device) {
-    	return;
+    if (!device) {
+        return;
     }
 
-	def vd = [:]
+    def vd = [:]
     def jd = [id: device.id, label: device.label, type: type, value: vd];
     
-	if (type == "switch") {
-    	def s = device.currentState('switch')
-        vd['datetime'] = s?.isoDate
-    	vd['switch'] = s?.value == "on"
-	} else if (type == "motion") {
-    	def s = device.currentState('motion')
-        vd['datetime'] = s?.isoDate
-    	vd['motion'] = s?.value == "active"
-	} else if (type == "contact") {
-    	def s = device.currentState('contact')
-        vd['datetime'] = s?.isoDate
-    	vd['contact'] = s?.value == "closed"
-	} else if (type == "acceleration") {
-    	def s = device.currentState('acceleration')
-        vd['datetime'] = s?.isoDate
-    	vd['acceleration'] = s?.value == "active"
-	} else if (type == "presence") {
-    	def s = device.currentState('presence')
-        vd['datetime'] = s?.isoDate
-    	vd['presence'] = s?.value == "present"
+    if (type == "switch") {
+        def s = device.currentState('switch')
+        vd['timestamp'] = s?.isoDate
+        vd['switch'] = s?.value == "on"
+    } else if (type == "motion") {
+        def s = device.currentState('motion')
+        vd['timestamp'] = s?.isoDate
+        vd['motion'] = s?.value == "active"
+    } else if (type == "contact") {
+        def s = device.currentState('contact')
+        vd['timestamp'] = s?.isoDate
+        vd['contact'] = s?.value == "closed"
+    } else if (type == "acceleration") {
+        def s = device.currentState('acceleration')
+        vd['timestamp'] = s?.isoDate
+        vd['acceleration'] = s?.value == "active"
+    } else if (type == "presence") {
+        def s = device.currentState('presence')
+        vd['timestamp'] = s?.isoDate
+        vd['presence'] = s?.value == "present"
     }
     
     return jd
