@@ -5,11 +5,28 @@
  *  IOTDB.org
  *  2014-02-01
  *
- *  Allow control and monitoring of your SmartThings
- *  using an API.  
+ *  Allow control of your SmartThings via an API; 
+ *  Allow monitoring of your SmartThings using
+ *  MQTT through the IOTDB MQTT Bridge.
+ *
+ *  Follow us on Twitter:
+ *  - @iotdb
+ *  - @dpjanes
  *
  *  A work in progress!
  */
+
+/* --- IOTDB section --- */
+
+/*
+ *  IOTDB MQTT Bridge
+ *  - this works for now
+ *  - your life is private
+ *  - just set to empty values to turn off MQTT
+ */
+def iotdb_api_username = "nobody"
+def iotdb_api_key = "4B453B43-F1FC-4327-85FA-4DF93E0F5B01"
+    
 
 /* --- setup section --- */
 /*
@@ -164,18 +181,19 @@ def _send_pushingbox() {
  *  See https://iotdb.org/playground/mqtt/bridge for documentation
  */
 def _send_mqtt(device, device_type, deviced) {
+    if (!iotdb_api_username || !iotdb_api_key) {
+        return
+    }
+
     log.debug "_send_mqtt called";
 
-    def username = "nobody"
-    def nonce = "4B453B43-F1FC-4327-85FA-4DF93E0F5B01"
-    
     def now = Calendar.instance
     def date = now.time
     def millis = date.time
     def sequence = millis
     def isodatetime = deviced?.value?.timestamp
     
-    def digest = "${nonce}/${username}/${isodatetime}/${sequence}".toString();
+    def digest = "${iotdb_api_key}/${iotdb_api_username}/${isodatetime}/${sequence}".toString();
     def hash = digest.encodeAsMD5();
     
     def topic = "${device_type}/${deviced.id}".toString()
@@ -188,7 +206,7 @@ def _send_mqtt(device, device_type, deviced) {
         "timestamp": isodatetime,
         "sequence": sequence,
         "signed": hash,
-        "username": username
+        "username": iotdb_api_username
     ]
 
     def params = [
