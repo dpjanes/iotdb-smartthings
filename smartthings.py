@@ -32,7 +32,8 @@ try:
     import iotdb_log
 except:
     class iotdb_log(object):
-        def log(self, **ad):
+        @staticmethod
+        def log(**ad):
             pprint.pprint(ad)
 
 class SmartThings(object):
