@@ -116,6 +116,11 @@ class SmartThings(object):
         )
 
 if __name__ == '__main__':
+    dtypes = [ 
+        "switch", "motion", "presence", "acceleration", "contact", 
+        "temperature", "battery", "acceleration", "threeAxis",
+    ]
+
     parser = OptionParser()
     parser.add_option(
         "", "--debug",
@@ -134,7 +139,7 @@ if __name__ == '__main__':
     parser.add_option(
         "", "--type",
         dest = "device_type",
-        help = "The device type (required), one of switch, motion, presence, acceleration, contact"
+        help = "The device type (required), one of %s" % ", ".join(dtypes)
     )
     parser.add_option(
         "", "--id",
@@ -150,7 +155,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     if not options.device_type:
-        print >> sys.stderr, "%s: --type <switch|motion|presence|accleration|contact>" % ( sys.argv[0], )
+        print >> sys.stderr, "%s: --type <%s>" % ( sys.argv[0], "|".join(dtypes))
         parser.print_help(sys.stderr)
         sys.exit(1)
         

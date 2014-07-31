@@ -14,23 +14,46 @@
  *  - @dpjanes
  *
  *  A work in progress!
+ *
+ *  This is for SmartThing's benefit. There's no need to 
+ *  change this unless you really want to
  */
-
+ 
+definition(
+    name: "IOTDB.bridge",
+    namespace: "",
+    author: "David Janes",
+    description: "Bridge to/from JSON/MQTT.",
+    category: "My Apps",
+    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
+    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience%402x.png",
+    oauth: true)
+    
 /* --- IOTDB section --- */
-
 /*
  *  IOTDB MQTT Bridge
  *  - this works for now
  *  - your life is private
  *  - just set to empty values to turn off MQTT
+ *
+ *  The values below can be copied from this page
+ *  - https://iotdb.org/playground/mqtt/bridge
+ *
+ *  Make sure you are logged into IOTDB first
  */
-def iotdb_api_username = "nobody"
-def iotdb_api_key = "4B453B43-F1FC-4327-85FA-4DF93E0F5B01"
+def _settings()
+{
+    [ 
+		iotdb_api_username: "",
+        iotdb_api_key: ""
+    ]
+}
+
     
 
 /* --- setup section --- */
 /*
- *  The user preferences - SmartThings turns this into an UI.
+ *  The user 
  *  Make sure that if you change anything related to this in the code
  *  that you update the preferences in your installed apps.
  *
@@ -43,11 +66,35 @@ preferences {
     section("Allow IOTDB to Control & Access These Things...") {
         input "d_switch", "capability.switch", title: "Switch", multiple: true
         input "d_motion", "capability.motionSensor", title: "Motion", required: false, multiple: true
+        input "d_temperature", "capability.temperatureMeasurement", title: "Temperature", multiple: true
         input "d_contact", "capability.contactSensor", title: "Contact", required: false, multiple: true
         input "d_acceleration", "capability.accelerationSensor", title: "Acceleration", required: false, multiple: true
         input "d_presence", "capability.presenceSensor", title: "Presence", required: false, multiple: true
+        input "d_battery", "capability.battery", title: "Battery", multiple: true
+        input "d_threeAxis", "capability.threeAxis", title: "3 Axis", multiple: true
     }
 }
+
+/*
+input "d_alarm", "capability.alarm", title: "alarm", multiple: true
+input "d_configuration", "capability.configuration", title: "configuration", multiple: true
+input "d_illuminanceMeasurement", "capability.illuminanceMeasurement", title: "illuminanceMeasurement", multiple: true
+input "d_polling", "capability.polling", title: "polling", multiple: true
+input "d_relativeHumidityMeasurement", "capability.relativeHumidityMeasurement", title: "relativeHumidityMeasurement", multiple: true
+input "d_thermostatCoolingSetpoint", "capability.thermostatCoolingSetpoint", title: "thermostatCoolingSetpoint", multiple: true
+input "d_thermostatFanMode", "capability.thermostatFanMode", title: "thermostatFanMode", multiple: true
+input "d_thermostatHeatingSetpoint", "capability.thermostatHeatingSetpoint", title: "thermostatHeatingSetpoint", multiple: true
+input "d_thermostatMode", "capability.thermostatMode", title: "thermostatMode", multiple: true
+input "d_thermostatSetpoint", "capability.thermostatSetpoint", title: "thermostatSetpoint", multiple: true
+input "d_threeAxisMeasurement", "capability.threeAxisMeasurement", title: "threeAxisMeasurement", multiple: true
+input "d_waterSensor", "capability.waterSensor", title: "waterSensor", multiple: true
+
+lqi: 100 %
+acceleration: inactive
+threeAxis: -38,55,1021
+battery: 88 %
+temperature: 65 F
+*/
 
 /*
  *  The API
@@ -97,9 +144,12 @@ def _event_subscribe()
 {
     subscribe(d_switch, "switch", "_on_event")
     subscribe(d_motion, "motion", "_on_event")
+    subscribe(d_temperature, "temperature", "_on_event")
     subscribe(d_contact, "contact", "_on_event")
     subscribe(d_acceleration, "acceleration", "_on_event")
     subscribe(d_presence, "presence", "_on_event")
+    subscribe(d_battery, "battery", "_on_event")
+    subscribe(d_threeAxis, "threeAxis", "_on_event")
 }
 
 /*
@@ -108,7 +158,9 @@ def _event_subscribe()
  */
 def _on_event(evt)
 {
-    def dt = _device_and_type_for_id(evt.deviceId)
+//    log.debug "_on_event XXX event.id=${evt?.id} event.deviceId=${evt?.deviceId} event.isStateChange=${evt?.isStateChange} event.name=${evt?.name}"
+    
+    def dt = _device_and_type_for_event(evt)
     if (!dt) {
         log.debug "_on_event deviceId=${evt.deviceId} not found?"
         return;
@@ -181,7 +233,10 @@ def _send_pushingbox() {
  *  See https://iotdb.org/playground/mqtt/bridge for documentation
  */
 def _send_mqtt(device, device_type, deviced) {
-    if (!iotdb_api_username || !iotdb_api_key) {
+	def settings = _settings()
+    // log.debug "_send_mqtt: iotdb_api_username=${settings.iotdb_api_username},iotdb_api_key=${settings.iotdb_api_key}"
+    
+    if (!settings.iotdb_api_username || !settings.iotdb_api_key) {
         return
     }
 
@@ -193,10 +248,10 @@ def _send_mqtt(device, device_type, deviced) {
     def sequence = millis
     def isodatetime = deviced?.value?.timestamp
     
-    def digest = "${iotdb_api_key}/${iotdb_api_username}/${isodatetime}/${sequence}".toString();
+    def digest = "${settings.iotdb_api_key}/${settings.iotdb_api_username}/${isodatetime}/${sequence}".toString();
     def hash = digest.encodeAsMD5();
     
-    def topic = "${device_type}/${deviced.id}".toString()
+    def topic = "st/${device_type}/${deviced.id}".toString()
     
     def uri = "https://iotdb.org/playground/mqtt/bridge"
     def headers = [:]
@@ -206,7 +261,7 @@ def _send_mqtt(device, device_type, deviced) {
         "timestamp": isodatetime,
         "sequence": sequence,
         "signed": hash,
-        "username": iotdb_api_username
+        "username": settings.iotdb_api_username
     ]
 
     def params = [
@@ -230,9 +285,12 @@ def _dtd()
     [ 
         switch: d_switch, 
         motion: d_motion, 
+        temperature: d_temperature, 
         contact: d_contact,
         acceleration: d_acceleration,
-        presence: d_presence
+        presence: d_presence,
+        battery: d_battery,
+        threeAxis: d_threeAxis
     ]
 }
 
@@ -241,16 +299,19 @@ def _devices_for_type(type)
     _dtd()[type]
 }
 
-def _device_and_type_for_id(id)
+def _device_and_type_for_event(evt)
 {
     def dtd = _dtd()
     
     for (dt in _dtd()) {
-        def type = dt.key
+        if (dt.key != evt.name) {
+        	continue
+        }
+        
         def devices = dt.value
         for (device in devices) {
-            if (device.id == id) {
-                return [ device: device, type: type ]
+            if (device.id == evt.deviceId) {
+                return [ device: device, type: dt.key ]
             }
         }
     }
@@ -302,6 +363,10 @@ private _device_to_json(device, type) {
         def s = device.currentState('motion')
         vd['timestamp'] = s?.isoDate
         vd['motion'] = s?.value == "active"
+    } else if (type == "temperature") {
+        def s = device.currentState('temperature')
+        vd['timestamp'] = s?.isoDate
+        vd['temperature'] = s?.value.toFloat()
     } else if (type == "contact") {
         def s = device.currentState('contact')
         vd['timestamp'] = s?.isoDate
@@ -314,6 +379,16 @@ private _device_to_json(device, type) {
         def s = device.currentState('presence')
         vd['timestamp'] = s?.isoDate
         vd['presence'] = s?.value == "present"
+    } else if (type == "battery") {
+        def s = device.currentState('battery')
+        vd['timestamp'] = s?.isoDate
+        vd['battery'] = s?.value.toFloat() / 100.0;
+    } else if (type == "threeAxis") {
+        def s = device.currentState('threeAxis')
+        vd['timestamp'] = s?.isoDate
+        vd['x'] = s?.xyzValue?.x
+        vd['y'] = s?.xyzValue?.y
+        vd['z'] = s?.xyzValue?.z
     }
     
     return jd
