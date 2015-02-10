@@ -1,0 +1,24 @@
+{
+    "author": "David P. Janes <davidjanes@iotdb.org> (https://iotdb.org)", 
+    "bin": {
+        "smartthings": "./smartthingslib.js"
+    }, 
+    "bugs": {
+        "url": "https://github.com/dpjanes/iotdb-smartthings/issues"
+    }, 
+    "dependencies": {
+        "minimist": "~1.1.0", 
+        "unirest": "~0.4.0"
+    }, 
+    "description": "Node.JS SmartThings Library", 
+    "homepage": "https://iotdb.org", 
+    "license": "Apache-2.0", 
+    "main": "smartthingslib.js", 
+    "name": "iotdb-smartthings", 
+    "private": false, 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/dpjanes/iotdb-models"
+    }, 
+    "version": "0.0.4"
+}
