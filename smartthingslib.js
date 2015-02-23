@@ -27,6 +27,21 @@ var SmartThings = function() {
 util.inherits(SmartThings, events.EventEmitter);
 
 /**
+ *  Explicitly make the settings
+ */
+SmartThings.prototype.configure = function(paramd) {
+    var self = this;
+
+    paramd = paramd || {};
+
+    self.std = {};
+    self.std.client_id = paramd.client_id || "";
+    self.std.access_token = paramd.access_token || "";
+    self.std.api = paramd.api || "https://graph.api.smartthings.com/api/smartapps/endpoints/" + self.std.client_id;
+    self.std.api_location = paramd.api_location || "graph.api.smartthings.com";
+};
+
+/**
  *  Load the JSON Settings file. 
  *
  *  <p>
@@ -162,3 +177,13 @@ SmartThings.prototype.device_request = function(deviced, requestd) {
 }
 
 exports.SmartThings = SmartThings
+exports.device_types = [
+    "switch",
+    "motion",
+    "presence",
+    "acceleration",
+    "contact",
+    "temperature",
+    "battery",
+    "threeAxis",
+];

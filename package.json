@@ -7,9 +7,11 @@
         "url": "https://github.com/dpjanes/iotdb-smartthings/issues"
     }, 
     "dependencies": {
+        "homestar": "",
         "minimist": "~1.1.0", 
         "unirest": "~0.4.0"
     }, 
+    "homestar": {},
     "description": "Node.JS SmartThings Library", 
     "homepage": "https://iotdb.org", 
     "license": "Apache-2.0", 
