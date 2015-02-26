@@ -357,35 +357,35 @@ private _device_to_json(device, type) {
     
     if (type == "switch") {
         def s = device.currentState('switch')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['switch'] = s?.value == "on"
     } else if (type == "motion") {
         def s = device.currentState('motion')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['motion'] = s?.value == "active"
     } else if (type == "temperature") {
         def s = device.currentState('temperature')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['temperature'] = s?.value.toFloat()
     } else if (type == "contact") {
         def s = device.currentState('contact')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['contact'] = s?.value == "closed"
     } else if (type == "acceleration") {
         def s = device.currentState('acceleration')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['acceleration'] = s?.value == "active"
     } else if (type == "presence") {
         def s = device.currentState('presence')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['presence'] = s?.value == "present"
     } else if (type == "battery") {
         def s = device.currentState('battery')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['battery'] = s?.value.toFloat() / 100.0;
     } else if (type == "threeAxis") {
         def s = device.currentState('threeAxis')
-        jd['timestamp'] = s?.isoDate
+        vd['timestamp'] = s?.isoDate
         vd['x'] = s?.xyzValue?.x
         vd['y'] = s?.xyzValue?.y
         vd['z'] = s?.xyzValue?.z
