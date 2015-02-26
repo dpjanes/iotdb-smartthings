@@ -199,7 +199,7 @@ def _api_get()
     if (!device) {
         httpError(404, "Device not found")
     } else {
-        _device_to_json(device, type)
+        _device_to_json(device, params.type)
     }
 }
 

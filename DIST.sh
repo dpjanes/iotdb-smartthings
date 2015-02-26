@@ -27,7 +27,7 @@ echo "=================="
     fi
     mkdir "${NPM_DST}" || exit 1
 
-    update-package || exit 1
+    update-package --increment-version|| exit 1
 
     tar cf - \
         README.md \

@@ -8,28 +8,28 @@
  *  Library for interfacing with smartthings
  */
 
-"use strict"
+"use strict";
 
-var unirest = require('unirest')
+var unirest = require('unirest');
 
-var fs = require('fs')
-var util = require('util')
-var events = require('events')
+var fs = require('fs');
+var util = require('util');
+var events = require('events');
 
-var SmartThings = function() {
+var SmartThings = function () {
     var self = this;
 
     events.EventEmitter.call(self);
 
-    self.std = {}
-    self.endpointd = {}
-}
+    self.std = {};
+    self.endpointd = {};
+};
 util.inherits(SmartThings, events.EventEmitter);
 
 /**
  *  Explicitly make the settings
  */
-SmartThings.prototype.configure = function(paramd) {
+SmartThings.prototype.configure = function (paramd) {
     var self = this;
 
     paramd = paramd || {};
@@ -42,20 +42,22 @@ SmartThings.prototype.configure = function(paramd) {
 };
 
 /**
- *  Load the JSON Settings file. 
+ *  Load the JSON Settings file.
  *
  *  <p>
  *  See the documentation, but briefly you can get it from here:
  *  {@link https://iotdb.org/playground/oauthorize}
  */
-SmartThings.prototype.load_settings = function(filename) {
+SmartThings.prototype.load_settings = function (filename) {
     var self = this;
 
-    if (!filename) filename = "smartthings.json";
+    if (!filename) {
+        filename = "smartthings.json";
+    }
 
-    var data = fs.readFileSync(filename, 'utf8')
+    var data = fs.readFileSync(filename, 'utf8');
     self.std = JSON.parse(data);
-}
+};
 
 /**
  *  Get the endpoints exposed by the SmartThings App.
@@ -67,27 +69,27 @@ SmartThings.prototype.load_settings = function(filename) {
  *  <p>
  *  The first command you need to call
  */
-SmartThings.prototype.request_endpoint = function() {
+SmartThings.prototype.request_endpoint = function () {
     var self = this;
 
-    var endpoints_url = self.std["api"]
+    var endpoints_url = self.std["api"];
     var endpoints_paramd = {
         "access_token": self.std["access_token"]
-    }
+    };
 
     unirest
         .get(endpoints_url)
         .query(endpoints_paramd)
-        .end(function(result) {
+        .end(function (result) {
             if (!result.ok) {
                 console.log("SmartThings.request_endpoints", "something went wrong", result);
                 return;
             }
 
-            self.endpointd = result.body[0]
-            self.emit("endpoint", self)
+            self.endpointd = result.body[0];
+            self.emit("endpoint", self);
         });
-}
+};
 
 /**
  *  Get devices.
@@ -98,38 +100,37 @@ SmartThings.prototype.request_endpoint = function() {
  *  The type of device to request, i.e.
  *  switch, motion, acceleration, contact, presence
  */
-SmartThings.prototype.request_devices = function(device_type) {
+SmartThings.prototype.request_devices = function (device_type) {
     var self = this;
 
     if (!self.endpointd.url) {
-        console.log("SmartThings.request_devices: no endpoint? Perhaps .request_endpoint has not been called")
-        return
+        console.log("SmartThings.request_devices: no endpoint? Perhaps .request_endpoint has not been called");
+        return;
     }
 
-    var devices_url = "https://graph.api.smartthings.com" + self.endpointd.url + "/" + device_type
-    var devices_paramd = {
-    }
+    var devices_url = "https://graph.api.smartthings.com" + self.endpointd.url + "/" + device_type;
+    var devices_paramd = {};
     var devices_headerd = {
         "Authorization": "Bearer " + self.std["access_token"]
-    }
-    
+    };
+
     unirest
         .get(devices_url)
         .query(devices_paramd)
         .headers(devices_headerd)
-        .end(function(result) {
+        .end(function (result) {
             if (!result.ok) {
-                console.log("SmartThings.request_devices", "something went wrong", 
+                console.log("SmartThings.request_devices", "something went wrong",
                     "\n url=", devices_url,
-                    "\n error=", result.error, 
+                    "\n error=", result.error,
                     "\n body=", result.body
                 );
                 return;
             }
 
-            self.emit("devices", device_type, result.body)
+            self.emit("devices", device_type, result.body);
         });
-}
+};
 
 /**
  *  Send a request to a device
@@ -141,42 +142,87 @@ SmartThings.prototype.request_devices = function(device_type) {
  *  A request dictinary, for example something like
  *  <code>{ switch: 1 }</code>
  */
-SmartThings.prototype.device_request = function(deviced, requestd) {
+SmartThings.prototype.device_request = function (deviced, requestd, callback) {
     var self = this;
 
+    if (!callback) {
+        callback = function () {};
+    }
+
     if (!self.endpointd.url) {
-        console.log("SmartThings.device_request: no endpoint? Perhaps .request_endpoint has not been called")
-        return
+        console.log("SmartThings.device_request: no endpoint? Perhaps .request_endpoint has not been called");
+        return;
     }
 
     var devices_url = "https://graph.api.smartthings.com" + self.endpointd.url + "/" + deviced.type + "/" + deviced.id;
-    var devices_paramd = {
-        "access_token": self.std["access_token"]
-    }
     var devices_headerd = {
         "Authorization": "Bearer " + self.std["access_token"]
-    }
-    
+    };
+
     unirest
         .put(devices_url)
         .type('json')
         .send(requestd)
         .headers(devices_headerd)
-        .end(function(result) {
+        .end(function (result) {
             if (!result.ok) {
-                console.log("SmartThings.device_request", "something went wrong", 
+                callback(result.error, deviced, null);
+
+                console.log("SmartThings.device_request", "something went wrong",
                     "\n url=", devices_url,
-                    "\n error=", result.error, 
+                    "\n error=", result.error,
                     "\n body=", result.body
                 );
                 return;
             }
 
-            self.emit("request", deviced)
-        });
-}
+            self.emit("request", deviced);
+            callback(null, deviced, result.body);
 
-exports.SmartThings = SmartThings
+        });
+};
+
+/**
+ *  Request device's state
+ *
+ *  @param {dictionary} device
+ *  A device dictionary, as found by {@link request_devices}
+ */
+SmartThings.prototype.device_poll = function (deviced, callback) {
+    var self = this;
+
+    if (!self.endpointd.url) {
+        console.log("SmartThings.device_request: no endpoint? Perhaps .request_endpoint has not been called");
+        return;
+    }
+
+    var devices_url = "https://graph.api.smartthings.com" + self.endpointd.url + "/" + deviced.type + "/" + deviced.id;
+    var devices_headerd = {
+        "Authorization": "Bearer " + self.std["access_token"]
+    };
+
+    unirest
+        .get(devices_url)
+        .type('json')
+        .headers(devices_headerd)
+        .end(function (result) {
+            if (!result.ok) {
+                callback(result.error, deviced, null);
+
+                console.log("SmartThings.device_request", "something went wrong",
+                    "\n url=", devices_url,
+                    "\n error=", result.error,
+                    "\n body=", result.body
+                );
+                return;
+            }
+
+            self.emit("device", result.body);
+            callback(null, deviced, result.body);
+        });
+};
+
+exports.SmartThings = SmartThings;
 exports.device_types = [
     "switch",
     "motion",
