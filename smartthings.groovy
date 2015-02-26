@@ -357,40 +357,42 @@ private _device_to_json(device, type) {
     
     if (type == "switch") {
         def s = device.currentState('switch')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['switch'] = s?.value == "on"
     } else if (type == "motion") {
         def s = device.currentState('motion')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['motion'] = s?.value == "active"
     } else if (type == "temperature") {
         def s = device.currentState('temperature')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['temperature'] = s?.value.toFloat()
     } else if (type == "contact") {
         def s = device.currentState('contact')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['contact'] = s?.value == "closed"
     } else if (type == "acceleration") {
         def s = device.currentState('acceleration')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['acceleration'] = s?.value == "active"
     } else if (type == "presence") {
         def s = device.currentState('presence')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['presence'] = s?.value == "present"
     } else if (type == "battery") {
         def s = device.currentState('battery')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['battery'] = s?.value.toFloat() / 100.0;
     } else if (type == "threeAxis") {
         def s = device.currentState('threeAxis')
-        vd['timestamp'] = s?.isoDate
+        jd['timestamp'] = s?.isoDate
         vd['x'] = s?.xyzValue?.x
         vd['y'] = s?.xyzValue?.y
         vd['z'] = s?.xyzValue?.z
     }
     
+	def settings = _settings()
+    jd['mqtt'] = "tcp://mqtt.iotdb.org/u/${settings.iotdb_api_username}/st/${type}/${device.id}"
+
     return jd
 }
-
