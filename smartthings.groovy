@@ -64,14 +64,14 @@ def _settings()
  */
 preferences {
     section("Allow IOTDB to Control & Access These Things...") {
-        input "d_switch", "capability.switch", title: "Switch", multiple: true
-        input "d_motion", "capability.motionSensor", title: "Motion", required: false, multiple: true
-        input "d_temperature", "capability.temperatureMeasurement", title: "Temperature", multiple: true
-        input "d_contact", "capability.contactSensor", title: "Contact", required: false, multiple: true
+        input "d_switch", "capability.switch", title: "Switch", required: false, multiple: true
+        input "d_motion", "capability.motionSensor", title: "Motion", required: false, required: false, multiple: true
+        input "d_temperature", "capability.temperatureMeasurement", title: "Temperature", required: false, multiple: true
+        input "d_contact", "capability.contactSensor", title: "Contact", required: false, required: false, multiple: true
         input "d_acceleration", "capability.accelerationSensor", title: "Acceleration", required: false, multiple: true
         input "d_presence", "capability.presenceSensor", title: "Presence", required: false, multiple: true
-        input "d_battery", "capability.battery", title: "Battery", multiple: true
-        input "d_threeAxis", "capability.threeAxis", title: "3 Axis", multiple: true
+        input "d_battery", "capability.battery", title: "Battery", required: false, multiple: true
+        input "d_threeAxis", "capability.threeAxis", title: "3 Axis", required: false, multiple: true
     }
 }
 
