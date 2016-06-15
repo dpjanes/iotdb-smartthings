@@ -115,11 +115,15 @@ class SmartThings(object):
             data=json.dumps(requestd)
         )
 
+    def device_types(self):
+        return dtypes
+
+dtypes = [
+    "switch", "motion", "presence", "acceleration", "contact",
+    "temperature", "battery", "acceleration", "threeAxis", "humidity"
+]
+
 if __name__ == '__main__':
-    dtypes = [ 
-        "switch", "motion", "presence", "acceleration", "contact", 
-        "temperature", "battery", "acceleration", "threeAxis",
-    ]
 
     parser = OptionParser()
     parser.add_option(
