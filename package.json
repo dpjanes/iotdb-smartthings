@@ -22,7 +22,7 @@
         "load-grunt-tasks": "~3.4.1", 
         "request": "~2.70.0"
     }, 
-    "homepage": "https://iotdb.org", 
+    "homepage": "https://github.com/dpjanes/node-iotdb",
     "homestar": {}, 
     "license": "Apache-2.0", 
     "main": "smartthingslib.js", 
