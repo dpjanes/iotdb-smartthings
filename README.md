@@ -19,6 +19,17 @@ to MQTT. It's anonymous enough but you may find it
 creepy and it's easily turned off by editing
 <code>smartthings.groovy</code>.
 
+## Shards
+
+If you are having trouble connecting to SmartThings, you may have to change your shard. 
+Add to `smartthings.json`
+
+    "api_location": "<shard-url>"
+
+You can find out your shard following the instructions here:
+[https://community.smartthings.com/t/faq-how-to-find-out-what-shard-cloud-slice-ide-url-your-account-location-is-on/53923](https://community.smartthings.com/t/faq-how-to-find-out-what-shard-cloud-slice-ide-url-your-account-location-is-on/53923)
+
+
 ## Installation
 
 This is somewhat developer-y. At some point
