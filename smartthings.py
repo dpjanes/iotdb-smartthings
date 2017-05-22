@@ -78,7 +78,7 @@ class SmartThings(object):
     def request_devices(self, device_type):
         """List the devices"""
 
-        devices_url = "https://%s%s/%s" % ( self.std["api_location"], self.endpointd["url"], device_type, )
+        devices_url = "https://%s%s/%s" % ( self.std.get("api_location", "graph.api.smartthings.com"), self.endpointd["url"], device_type, )
         devices_paramd = {
         }
         devices_headerd = {
