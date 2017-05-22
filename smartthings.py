@@ -78,7 +78,7 @@ class SmartThings(object):
     def request_devices(self, device_type):
         """List the devices"""
 
-        devices_url = "https://graph.api.smartthings.com%s/%s" % ( self.endpointd["url"], device_type, )
+        devices_url = "https://%s%s/%s" % ( self.std.get("api_location", "graph.api.smartthings.com"), self.endpointd["url"], device_type, )
         devices_paramd = {
         }
         devices_headerd = {
@@ -115,11 +115,15 @@ class SmartThings(object):
             data=json.dumps(requestd)
         )
 
+    def device_types(self):
+        return dtypes
+
+dtypes = [
+    "switch", "motion", "presence", "acceleration", "contact",
+    "temperature", "battery", "acceleration", "threeAxis", "humidity"
+]
+
 if __name__ == '__main__':
-    dtypes = [ 
-        "switch", "motion", "presence", "acceleration", "contact", 
-        "temperature", "battery", "acceleration", "threeAxis",
-    ]
 
     parser = OptionParser()
     parser.add_option(

@@ -44,7 +44,7 @@ definition(
 def _settings()
 {
     [ 
-		iotdb_api_username: "",
+        iotdb_api_username: "",
         iotdb_api_key: ""
     ]
 }
@@ -65,13 +65,15 @@ def _settings()
 preferences {
     section("Allow IOTDB to Control & Access These Things...") {
         input "d_switch", "capability.switch", title: "Switch", required: false, multiple: true
-        input "d_motion", "capability.motionSensor", title: "Motion", required: false, required: false, multiple: true
+        input "d_motion", "capability.motionSensor", title: "Motion", required: false, multiple: true
         input "d_temperature", "capability.temperatureMeasurement", title: "Temperature", required: false, multiple: true
-        input "d_contact", "capability.contactSensor", title: "Contact", required: false, required: false, multiple: true
+        input "d_contact", "capability.contactSensor", title: "Contact", required: false, multiple: true
         input "d_acceleration", "capability.accelerationSensor", title: "Acceleration", required: false, multiple: true
         input "d_presence", "capability.presenceSensor", title: "Presence", required: false, multiple: true
         input "d_battery", "capability.battery", title: "Battery", required: false, multiple: true
         input "d_threeAxis", "capability.threeAxis", title: "3 Axis", required: false, multiple: true
+        input "d_relativeHumidityMeasurement", "capability.relativeHumidityMeasurement", title: "relativeHumidityMeasurement", required: false, multiple: true
+
     }
 }
 
@@ -80,7 +82,6 @@ input "d_alarm", "capability.alarm", title: "alarm", multiple: true
 input "d_configuration", "capability.configuration", title: "configuration", multiple: true
 input "d_illuminanceMeasurement", "capability.illuminanceMeasurement", title: "illuminanceMeasurement", multiple: true
 input "d_polling", "capability.polling", title: "polling", multiple: true
-input "d_relativeHumidityMeasurement", "capability.relativeHumidityMeasurement", title: "relativeHumidityMeasurement", multiple: true
 input "d_thermostatCoolingSetpoint", "capability.thermostatCoolingSetpoint", title: "thermostatCoolingSetpoint", multiple: true
 input "d_thermostatFanMode", "capability.thermostatFanMode", title: "thermostatFanMode", multiple: true
 input "d_thermostatHeatingSetpoint", "capability.thermostatHeatingSetpoint", title: "thermostatHeatingSetpoint", multiple: true
@@ -290,7 +291,9 @@ def _dtd()
         acceleration: d_acceleration,
         presence: d_presence,
         battery: d_battery,
-        threeAxis: d_threeAxis
+        threeAxis: d_threeAxis,
+        humidity: d_relativeHumidityMeasurement
+
     ]
 }
 
@@ -353,7 +356,7 @@ private _device_to_json(device, type) {
     }
 
     def vd = [:]
-    def jd = [id: device.id, label: device.label, type: type, value: vd];
+    def jd = [id: device.id, label: device.label, type: type, value: vd, hub: device.hub.name];
     
     if (type == "switch") {
         def s = device.currentState('switch')
@@ -382,7 +385,11 @@ private _device_to_json(device, type) {
     } else if (type == "battery") {
         def s = device.currentState('battery')
         vd['timestamp'] = s?.isoDate
-        vd['battery'] = s?.value.toFloat() / 100.0;
+        vd['battery'] = s?.value.toFloat() / 100.0
+     } else if (type == "humidity") {
+        def s = device.currentState('humidity')
+        vd['timestamp'] = s?.isoDate
+        vd['humidity'] = s?.value.toFloat() / 100.0
     } else if (type == "threeAxis") {
         def s = device.currentState('threeAxis')
         vd['timestamp'] = s?.isoDate
