@@ -83,11 +83,13 @@ class SmartThings(object):
         }
 
         endpoints_response = requests.get(url=endpoints_url, params=endpoints_paramd)
+        
         try:
             endpoints = endpoints_response.json()
         except ValueError:
             SmartThings.raise_request_errors(endpoints_response)
             raise Exception("Received invalid JSON response")
+
         SmartThings.raise_api_errors(endpoints)
         self.endpointd = endpoints[0]
         if self.verbose: iotdb_log.log(
@@ -108,12 +110,14 @@ class SmartThings(object):
         }
 
         devices_response = requests.get(url=devices_url, params=devices_paramd, headers=devices_headerd)
+        
         try:
             self.deviceds = devices_response.json()
         except ValueError:
             SmartThings.raise_request_errors(devices_response)
             raise Exception("Received invalid JSON response")
         SmartThings.raise_api_errors(self.deviceds)
+
         for switchd in self.deviceds:
             switchd['url'] = "%s/%s" % ( devices_url, switchd['id'], )
 
@@ -141,6 +145,7 @@ class SmartThings(object):
             headers=command_headerd,
             data=json.dumps(requestd)
         )
+        SmartThings.raise_request_errors(command_response)
 
     def device_types(self):
         return dtypes
