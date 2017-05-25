@@ -37,6 +37,23 @@ except:
             pprint.pprint(ad)
 
 class SmartThings(object):
+
+    @staticmethod
+    def raise_request_errors(response):
+        if not response.ok:
+            raise Exception("HTTP error " + str(response.status_code) + ": " + response.url)
+
+    @staticmethod
+    def raise_api_errors(jsonResponse):
+        if "error" in jsonResponse:
+            if type(jsonResponse["error"]) == bool:
+                errorType = jsonResponse.get("type", "Unknown Error")
+            else:
+                errorType =  jsonResponse["error"]
+            errorMessage = jsonResponse.get("message", "") + \
+            jsonResponse.get("error_description", "")
+            raise Exception(errorType + ": " + errorMessage)
+
     def __init__(self, verbose=True):
         self.verbose = verbose
         self.std = {}
@@ -66,8 +83,13 @@ class SmartThings(object):
         }
 
         endpoints_response = requests.get(url=endpoints_url, params=endpoints_paramd)
-        self.endpointd = endpoints_response.json()[0]
-
+        try:
+            endpoints = endpoints_response.json()
+        except ValueError:
+            SmartThings.raise_request_errors(endpoints_response)
+            raise Exception("Received invalid JSON response")
+        SmartThings.raise_api_errors(endpoints)
+        self.endpointd = endpoints[0]
         if self.verbose: iotdb_log.log(
             "endpoints",
             endpoints_url=endpoints_url,
@@ -86,7 +108,12 @@ class SmartThings(object):
         }
 
         devices_response = requests.get(url=devices_url, params=devices_paramd, headers=devices_headerd)
-        self.deviceds = devices_response.json()
+        try:
+            self.deviceds = devices_response.json()
+        except ValueError:
+            SmartThings.raise_request_errors(devices_response)
+            raise Exception("Received invalid JSON response")
+        SmartThings.raise_api_errors(self.deviceds)
         for switchd in self.deviceds:
             switchd['url'] = "%s/%s" % ( devices_url, switchd['id'], )
 
