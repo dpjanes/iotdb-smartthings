@@ -44,15 +44,15 @@ class SmartThings(object):
             raise Exception("HTTP error " + str(response.status_code) + ": " + response.url)
 
     @staticmethod
-    def raise_api_errors(jsonResponse):
-        if "error" in jsonResponse:
-            if type(jsonResponse["error"]) == bool:
-                errorType = jsonResponse.get("type", "Unknown Error")
+    def raise_api_errors(json_response):
+        if "error" in json_response:
+            if type(json_response["error"]) == bool:
+                error_type = json_response.get("type", "Unknown Error")
             else:
-                errorType =  jsonResponse["error"]
-            errorMessage = jsonResponse.get("message", "") + \
-            jsonResponse.get("error_description", "")
-            raise Exception(errorType + ": " + errorMessage)
+                error_type =  json_response["error"]
+            error_message = json_response.get("message", "") + \
+            json_response.get("error_description", "")
+            raise Exception(error_type + ": " + error_message)
 
     def __init__(self, verbose=True):
         self.verbose = verbose
