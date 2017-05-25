@@ -145,7 +145,13 @@ class SmartThings(object):
             headers=command_headerd,
             data=json.dumps(requestd)
         )
-        SmartThings.raise_request_errors(command_response)
+
+        command_api_response = {}
+        try:
+            command_api_response = command_response.json()
+        except ValueError:
+            SmartThings.raise_request_errors(command_response)
+        SmartThings.raise_api_errors(command_api_response)
 
     def device_types(self):
         return dtypes
