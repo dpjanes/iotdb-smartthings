@@ -356,7 +356,7 @@ private _device_to_json(device, type) {
     }
 
     def vd = [:]
-    def jd = [id: device.id, label: device.label, type: type, value: vd, hub: device.hub.name];
+    def jd = [id: device.id, label: device.label, type: type, value: vd, hub: device.hub?.name];
     
     if (type == "switch") {
         def s = device.currentState('switch')
