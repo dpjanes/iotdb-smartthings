@@ -8,21 +8,21 @@
     }, 
     "dependencies": {
         "minimist": "~1.2.0", 
-        "unirest": "~0.4.2"
+        "unirest": "~0.5.1"
     }, 
     "description": "Node.JS SmartThings Library", 
     "devDependencies": {
-        "grunt": "~1.0.1", 
-        "grunt-contrib-jshint": "~1.0.0", 
+        "grunt": "~1.0.2", 
+        "grunt-contrib-jshint": "~1.1.0", 
         "grunt-contrib-nodeunit": "~1.0.0", 
         "grunt-contrib-uglify": "~1.0.1", 
-        "grunt-contrib-watch": "~1.0.0", 
-        "grunt-jsbeautifier": "~0.2.10", 
-        "jshint-stylish": "~2.1.0", 
+        "grunt-contrib-watch": "~1.0.1", 
+        "grunt-jsbeautifier": "~0.2.13", 
+        "jshint-stylish": "~2.2.1", 
         "load-grunt-tasks": "~3.4.1", 
-        "request": "~2.70.0"
+        "request": "~2.85.0"
     }, 
-    "homepage": "https://github.com/dpjanes/node-iotdb",
+    "homepage": "https://github.com/dpjanes/node-iotdb", 
     "homestar": {}, 
     "license": "Apache-2.0", 
     "main": "smartthingslib.js", 
@@ -35,5 +35,5 @@
     "scripts": {
         "test": "grunt"
     }, 
-    "version": "0.0.9"
+    "version": "0.0.10"
 }
